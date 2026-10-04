@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Un cadeau pour toi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Poppins:wght@400&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       Variables et base
+       ========================================================================== */
+    :root {
+      --Pink: #f8c8d4;
+      --Rose: #e8587e;
+      --Wine: #8a1c3c;
+      --Cream: #fdf3e7;
+      --Ink: #5a2a3a;
+
+      color-scheme: light;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: linear-gradient(160deg, #fbd5df, #f7bccd);
+      font-family: Poppins, system-ui, sans-serif;
+      color: var(--Ink);
+      overflow: hidden;
+    }
+
+    h1,
+    h2 {
+      font-family: Fredoka, system-ui, sans-serif;
+      color: var(--Wine);
+      margin: 0.2em 0;
+    }
+
+    .sub {
+      font-style: italic;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin: 0;
+    }
+
+    /* ==========================================================================
+       Écrans
+       ========================================================================== */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+      padding: 20px;
+      overflow: auto;
+    }
+
+    .screen.active {
+      display: flex;
+      animation: In 0.6s ease;
+    }
+
+    .cat {
+      width: 110px;
+      height: auto;
+    }
+
+    /* ==========================================================================
+       Boutons
+       ========================================================================== */
+    .btn {
+      font-family: Fredoka, sans-serif;
+      font-weight: 700;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 26px;
+      background: var(--Rose);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #b83a5e;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        filter 0.15s,
+        translate 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+    }
+
+    .btn.alt {
+      background: #f4a9bc;
+      box-shadow: 0 4px 0 #d8829a;
+    }
+
+    @media (hover: hover) {
+      .btn:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+      }
+    }
+
+    /* Doit rester après .btn.alt pour que l'ombre disparaisse aussi sur NON */
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+    .btn:focus-visible,
+    .card:focus-visible {
+      outline: 3px solid var(--Wine);
+      outline-offset: 3px;
+    }
+
+    #Final {
+      animation: Pop 0.4s cubic-bezier(0.3, 1.4, 0.5, 1);
+    }
+
+    /* ==========================================================================
+       Cœurs qui tombent
+       ========================================================================== */
+    #Rain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .heart {
+      position: absolute;
+      top: -30px;
+      opacity: 0.7;
+      animation: Fall linear forwards;
+    }
+
+    /* ==========================================================================
+       Menu et cartes
+       ========================================================================== */
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin: 10px 0;
+    }
+
+    .card {
+      width: 120px;
+      height: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--Rose);
+      border-radius: 16px;
+      background: #ffe3ea;
+      font-size: 2.6rem;
+      box-shadow: 0 6px 14px #e8587e33;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: transform 0.2s;
+    }
+
+    .card small {
+      font-family: Fredoka, sans-serif;
+      font-size: 0.85rem;
+      color: var(--Wine);
+      margin-top: 6px;
+    }
+
+    @media (hover: hover) {
+      .card:hover {
+        transform: translateY(-6px) rotate(-2deg);
+      }
+    }
+
+    .card:active {
+      transform: scale(0.95);
+    }
+
+    .card.done {
+      opacity: 0.6;
+    }
+
+    /* ==========================================================================
+       Fenêtre de contenu (bons, bouquet, lettre)
+       ========================================================================== */
+    dialog {
+      border: 0;
+      border-radius: 18px;
+      padding: 24px;
+      max-width: min(92vw, 380px);
+      background: var(--Cream);
+      color: var(--Ink);
+      text-align: center;
+      box-shadow: 0 20px 50px #0003;
+      max-height: 92dvh;
+      overflow: auto;
+    }
+
+    dialog.wide {
+      width: min(94vw, 440px);
+      max-width: none;
+    }
+
+    dialog[open] {
+      animation: Pop 0.3s ease;
+    }
+
+    dialog::backdrop {
+      background: #8a1c3c55;
+    }
+
+    .letter {
+      font-family: "Dancing Script", cursive;
+      font-size: 1.3rem;
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    .coupons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .coupon-wrap {
+      filter: drop-shadow(0 4px 6px #e8587e44);
+    }
+
+    /* Ticket : encoches rondes sur les côtés */
+    .coupon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 16px;
+      border: 0;
+      background: #ffe3ea;
+      font: inherit;
+      color: var(--Ink);
+      text-align: left;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition:
+        transform 0.15s,
+        background 0.3s;
+      mask:
+        radial-gradient(circle 9px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+        radial-gradient(circle 9px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+    }
+
+    @media (hover: hover) {
+      .coupon:hover {
+        transform: translateY(-2px) rotate(-0.5deg);
+      }
+    }
+
+    .coupon:active {
+      transform: scale(0.97);
+    }
+
+    .coupon:focus-visible {
+      outline: 3px solid var(--Wine);
+      outline-offset: -3px;
+    }
+
+    .coupon.used {
+      background: #f6d5dc;
+    }
+
+    .coupon-icon {
+      padding-right: 12px;
+      border-right: 2px dashed var(--Rose);
+      font-size: 2rem;
+    }
+
+    .coupon-text {
+      padding-right: 56px;
+      font-size: 0.8rem;
+      line-height: 1.3;
+    }
+
+    .coupon-text b {
+      display: block;
+      font-family: Fredoka, sans-serif;
+      font-size: 1rem;
+      color: var(--Wine);
+    }
+
+    .stamp {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      translate: 0 -50%;
+      rotate: -12deg;
+      scale: 2;
+      padding: 2px 8px;
+      border: 3px solid var(--Wine);
+      border-radius: 6px;
+      font-family: Fredoka, sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--Wine);
+      opacity: 0;
+    }
+
+    .coupon.used .stamp {
+      scale: 1;
+      opacity: 0.85;
+      transition:
+        opacity 0.15s,
+        scale 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
+    }
+
+    .bouquet-scene {
+      position: relative;
+      width: 100%;
+      max-height: 62dvh;
+      aspect-ratio: 3 / 4;
+      margin-top: 18px;
+    }
+
+    .bouquet {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      font-size: 9.5rem;
+      line-height: 1;
+      filter: drop-shadow(0 8px 10px #8a1c3c33);
+      animation:
+        BubbleIn 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) both,
+        Sway 4s ease-in-out 0.6s infinite;
+    }
+
+    .bubble {
+      position: absolute;
+      translate: -50% -50%;
+      max-width: 32%;
+      padding: 6px 9px;
+      border: 2px solid var(--Rose);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 4px 10px #e8587e33;
+      font-size: 0.7rem;
+      line-height: 1.25;
+      color: var(--Wine);
+      animation:
+        BubbleIn 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both,
+        Float 3s ease-in-out infinite;
+    }
+
+    .bubble:nth-child(even) {
+      background: #ffe3ea;
+    }
+
+    /* ==========================================================================
+       Déblocage
+       ========================================================================== */
+    input {
+      font: inherit;
+      padding: 10px 16px;
+      border: 2px solid var(--Rose);
+      border-radius: 999px;
+      text-align: center;
+      outline: 0;
+    }
+
+    #Msg {
+      min-height: 1.2em;
+      font-size: 0.85rem;
+      color: var(--Wine);
+    }
+
+    .shake {
+      animation: Shake 0.4s;
+    }
+
+    /* ==========================================================================
+       Projets d'avenir (cartes qui se retournent)
+       ========================================================================== */
+    .plans {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      max-width: 640px;
+      padding: 22px;
+      border-radius: 20px;
+      background: #fffaf5cc;
+    }
+
+    .plans-title,
+    .plans-sub {
+      width: 100%;
+    }
+
+    #PlanList {
+      display: contents;
+    }
+
+    .flip {
+      width: 140px;
+      height: 190px;
+      perspective: 800px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .flip > div {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.7s;
+    }
+
+    .flip.on > div {
+      transform: rotateY(180deg);
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      border: 1px solid #e9c9a6;
+      border-radius: 14px;
+      background: #fbe3c8;
+      font-size: 0.85rem;
+      backface-visibility: hidden;
+    }
+
+    .face.back {
+      background: var(--Cream);
+      transform: rotateY(180deg);
+    }
+
+    .face b {
+      font-family: Fredoka, sans-serif;
+      color: var(--Wine);
+      margin-bottom: 6px;
+    }
+
+    .face .big {
+      font-size: 2.4rem;
+      color: var(--Rose);
+    }
+
+    /* ==========================================================================
+       Animations
+       ========================================================================== */
+    @keyframes In {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+    }
+
+    @keyframes Pop {
+      from {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+    }
+
+    @keyframes BubbleIn {
+      from {
+        opacity: 0;
+        scale: 0.3;
+      }
+    }
+
+    @keyframes Float {
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+
+    @keyframes Sway {
+      0%,
+      100% {
+        transform: rotate(-3deg);
+      }
+      50% {
+        transform: rotate(3deg);
+      }
+    }
+
+    @keyframes Fall {
+      to {
+        transform: translateY(110vh) rotate(40deg);
+      }
+    }
+
+    @keyframes Shake {
+      25% {
+        transform: translateX(-8px);
+      }
+      75% {
+        transform: translateX(8px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="Rain"></div>
+
+  <!-- Mascotte (dessin générique réutilisé via <use>) -->
+  <svg width="0" height="0" style="position: absolute">
+    <symbol id="Cat" viewBox="0 0 100 90">
+      <path d="M14 34 L22 6 L44 20Z M86 34 L78 6 L56 20Z" fill="#fff" stroke="#333" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="50" cy="52" rx="42" ry="34" fill="#fff" stroke="#333" stroke-width="3"/>
+      <circle cx="33" cy="52" r="3.5" fill="#333"/>
+      <circle cx="67" cy="52" r="3.5" fill="#333"/>
+      <ellipse cx="50" cy="60" rx="4" ry="3" fill="#f2b632"/>
+      <path d="M8 50h16M8 60h16M76 50h16M76 60h16" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M62 22c8-10 22-6 20 3-2 7-14 6-20-3Z" fill="#e8587e" stroke="#b83a5e" stroke-width="2"/>
+    </symbol>
+  </svg>
+
+  <!-- 1. Introduction -->
+  <section id="Intro" class="screen active">
+    <svg class="cat"><use href="#Cat"/></svg>
+    <h1>Tu veux voir ton cadeau ?</h1>
+    <div style="position: relative; display: flex; gap: 16px">
+      <button class="btn" id="Yes">OUI, VITE !</button>
+      <button class="btn alt" id="No">NON MERCI</button>
+    </div>
+  </section>
+
+  <!-- 2. Menu des cartes -->
+  <section id="Menu" class="screen">
+    <h1>Fait rien que pour toi</h1>
+    <p class="sub">Touche une carte pour ouvrir ta surprise ✨</p>
+
+    <div class="cards">
+      <div class="card" data-key="Coupons">🎟️<small>Bons cadeaux</small></div>
+      <div class="card" data-key="Bouquet">💐<small>Un bouquet</small></div>
+      <div class="card" data-key="Letter">💌<small>Une lettre</small></div>
+    </div>
+
+    <button class="btn" id="Final" hidden>Une dernière surprise ✨</button>
+  </section>
+
+  <!-- 3. Déblocage par prénom -->
+  <section id="Unlock" class="screen">
+    <svg class="cat"><use href="#Cat"/></svg>
+    <h2>Une dernière surprise…</h2>
+    <p class="sub">Écris ton prénom pour débloquer la dernière surprise</p>
+    <input id="Name" placeholder="Ton prénom" autocomplete="off">
+    <button class="btn" id="Go">DÉBLOQUER</button>
+    <div id="Msg"></div>
+  </section>
+
+  <!-- 4. Projets d'avenir -->
+  <section id="Plans" class="screen">
+    <div class="plans">
+      <h1 class="plans-title">Nos projets d'avenir</h1>
+      <p class="sub plans-sub">Touche pour voir ce qui t'attend</p>
+      <div id="PlanList"></div>
+    </div>
+  </section>
+
+  <!-- Fenêtre de contenu -->
+  <dialog id="Box">
+    <div id="BoxBody"></div>
+    <p><button class="btn" id="Close">Fermer</button></p>
+  </dialog>
+
+  <script>
+    // ==========================================================================
+    // ✏️ À personnaliser
+    // ==========================================================================
+    const Config = {
+      Name: "Yaël",
+      Letter: [
+        "Mon amour,",
+        "J'ai tellement de chance de traverser la vie à tes côtés.",
+        "Même les plus petits moments deviennent spéciaux avec toi.",
+        "Joyeux anniversaire.",
+        "— Moi"
+      ],
+      Coupons: [
+        { Icon: "❓", Title: "Un lot de 3 questions", Text: "Valable à tout moment, utilisable 1 fois" },
+        { Icon: "❤️", Title: "Un gros calîn", Text: "Par télépathie ou en vrai quand on se verra" },
+        { Icon: "💆", Title: "Un massage", Text: "Durée : aussi longtemps que tu veux" },
+        { Icon: "🎬", Title: "Une soirée film", Text: "Tu choisis le film et quand on le regarde" }
+      ],
+      BouquetMessages: [
+        "Tu illumines mes jours",
+        "J'adore ton sourire, et aussi juste toi",
+        "Je t'aime ❤️",
+        "Merci d'être toi",
+        "Joyeux anniversaire 🎂 mon amour",
+        "Tout est doux avec toi",
+        "Ma plus belle chance",
+        "Mon cœur est à toi et prend en soins ❤️"
+      ],
+      Plans: [
+        {
+          Front: "Un jour…",
+          Title: "Première escale",
+          Text: "On partira découvrir un endroit nouveau, rien que toi et moi."
+        },
+        {
+          Front: "Tu verras…",
+          Title: "Une petite promesse",
+          Text: "Des soirées simples, de longues discussions, des fous rires sans fin."
+        },
+        {
+          Front: "Fais-moi confiance…",
+          Title: "Le meilleur",
+          Text: "Le meilleur est encore devant nous."
+        }
+      ]
+    };
+
+    // ==========================================================================
+    // Éléments de la page
+    // ==========================================================================
+    const Rain = document.getElementById("Rain");
+    const Yes = document.getElementById("Yes");
+    const No = document.getElementById("No");
+    const FinalButton = document.getElementById("Final");
+    const Box = document.getElementById("Box");
+    const BoxBody = document.getElementById("BoxBody");
+    const NameInput = document.getElementById("Name");
+    const Message = document.getElementById("Msg");
+    const PlanList = document.getElementById("PlanList");
+
+    const OpenedCards = new Set();
+const UsedCoupons = new Set();
+
+    // ==========================================================================
+    // Navigation entre les écrans
+    // ==========================================================================
+    function ShowScreen(Id) {
+      document.querySelectorAll(".screen").forEach((Screen) => {
+        Screen.classList.toggle("active", Screen.id === Id);
+      });
+    }
+
+    // ==========================================================================
+    // Cœurs qui tombent
+    // ==========================================================================
+    const HeartEmojis = ["💗", "💖", "🩷"];
+
+    function SpawnHeart() {
+      const Heart = document.createElement("span");
+      Heart.className = "heart";
+      Heart.textContent = HeartEmojis[Math.floor(Math.random() * HeartEmojis.length)];
+      Heart.style.left = Math.random() * 100 + "vw";
+      Heart.style.fontSize = 12 + Math.random() * 16 + "px";
+      Heart.style.animationDuration = 6 + Math.random() * 6 + "s";
+      Heart.addEventListener("animationend", () => Heart.remove());
+      Rain.appendChild(Heart);
+    }
+
+    setInterval(SpawnHeart, 700);
+
+    // ==========================================================================
+    // Introduction : OUI avance, NON s'enfuit
+    // ==========================================================================
+    const DodgeMargin = 8;
+    const DodgeMinDistance = 80;
+    const DodgeYesPadding = 12;
+    const DodgeMaxTries = 15;
+
+    let DodgeX = 0;
+    let DodgeY = 0;
+
+    function Overlaps(Left, Top, Width, Height, Rect, Padding) {
+      return (
+        Left < Rect.right + Padding &&
+        Left + Width > Rect.left - Padding &&
+        Top < Rect.bottom + Padding &&
+        Top + Height > Rect.top - Padding
+      );
+    }
+
+    function Dodge() {
+      // Position de base du bouton, sans son décalage actuel
+      const Parent = No.offsetParent.getBoundingClientRect();
+      const BaseLeft = Parent.left + No.offsetLeft;
+      const BaseTop = Parent.top + No.offsetTop;
+      const Width = No.offsetWidth;
+      const Height = No.offsetHeight;
+
+      // Décalages possibles pour rester dans l'écran
+      const MinX = DodgeMargin - BaseLeft;
+      const MaxX = window.innerWidth - DodgeMargin - Width - BaseLeft;
+      const MinY = DodgeMargin - BaseTop;
+      const MaxY = window.innerHeight - DodgeMargin - Height - BaseTop;
+
+      const YesRect = Yes.getBoundingClientRect();
+      let NewX = 0;
+      let NewY = 0;
+
+      // On cherche une position qui ne chevauche pas OUI et qui est assez loin
+      for (let Try = 0; Try < DodgeMaxTries; Try++) {
+        NewX = MinX + Math.random() * (MaxX - MinX);
+        NewY = MinY + Math.random() * (MaxY - MinY);
+
+        const HitsYes = Overlaps(BaseLeft + NewX, BaseTop + NewY, Width, Height, YesRect, DodgeYesPadding);
+        const TooClose = Math.hypot(NewX - DodgeX, NewY - DodgeY) < DodgeMinDistance;
+
+        if (!HitsYes && !TooClose) break;
+      }
+
+      DodgeX = NewX;
+      DodgeY = NewY;
+      No.style.translate = `${NewX}px ${NewY}px`;
+    }
+
+    function ResetDodge() {
+      DodgeX = 0;
+      DodgeY = 0;
+      No.style.translate = "";
+    }
+
+    Yes.addEventListener("click", () => ShowScreen("Menu"));
+    No.addEventListener("pointerenter", Dodge);
+    No.addEventListener("click", Dodge);
+    window.addEventListener("resize", ResetDodge);
+
+    // ==========================================================================
+    // Menu : les trois cartes
+    // ==========================================================================
+    const BubbleRadiusX = 33;
+    const BubbleRadiusY = 44;
+
+    // Place les bulles en cercle (en %) autour du bouquet, la première en haut
+    function BuildBubbles() {
+      const Count = Config.BouquetMessages.length;
+
+      return Config.BouquetMessages.map((Text, Index) => {
+        const Angle = (Index / Count) * 2 * Math.PI - Math.PI / 2;
+        const Left = 50 + BubbleRadiusX * Math.cos(Angle);
+        const Top = 50 + BubbleRadiusY * Math.sin(Angle);
+        const Delay = 0.3 + Index * 0.15;
+
+        return `<span class="bubble" style="left: ${Left}%; top: ${Top}%; animation-delay: ${Delay}s, ${Delay + 0.5}s">${Text}</span>`;
+      }).join("");
+    }
+
+    const CardContents = {
+      Coupons: () => `
+        <h2>Bons cadeaux</h2>
+        <p class="sub">Touche un bon pour le valider</p>
+        <div class="coupons">
+          ${Config.Coupons.map((Coupon, Index) => `
+            <div class="coupon-wrap">
+              <button class="coupon ${UsedCoupons.has(Index) ? "used" : ""}" data-index="${Index}">
+                <span class="coupon-icon">${Coupon.Icon}</span>
+                <span class="coupon-text"><b>${Coupon.Title}</b>${Coupon.Text}</span>
+                <span class="stamp">VALIDÉ</span>
+              </button>
+            </div>`).join("")}
+        </div>`,
+
+      Bouquet: () => `
+        <h2>Un bouquet rien que pour toi</h2>
+        <div class="bouquet-scene">
+          <div class="bouquet">💐</div>
+          ${BuildBubbles()}
+        </div>`,
+
+      Letter: () => `
+        <div class="letter">
+          ${Config.Letter.map((Line) => `<p>${Line}</p>`).join("")}
+        </div>`
+    };
+
+    function OpenCard(Card) {
+      const Key = Card.dataset.key;
+
+      BoxBody.innerHTML = CardContents[Key]();
+      Box.classList.toggle("wide", Key === "Bouquet");
+      Box.showModal();
+
+      Card.classList.add("done");
+      OpenedCards.add(Key);
+
+      if (OpenedCards.size === Object.keys(CardContents).length) {
+        FinalButton.hidden = false;
+      }
+    }
+
+    document.querySelectorAll(".card").forEach((Card) => {
+      Card.addEventListener("click", () => OpenCard(Card));
+    });
+
+    // Un seul écouteur pour tous les bons (le contenu est recréé à chaque ouverture)
+    BoxBody.addEventListener("click", (Event) => {
+      const Coupon = Event.target.closest(".coupon");
+      if (!Coupon) return;
+
+      const Index = Number(Coupon.dataset.index);
+      const IsUsed = Coupon.classList.toggle("used");
+
+      if (IsUsed) UsedCoupons.add(Index);
+      else UsedCoupons.delete(Index);
+    });
+
+    document.getElementById("Close").addEventListener("click", () => Box.close());
+    FinalButton.addEventListener("click", () => ShowScreen("Unlock"));
+
+    // ==========================================================================
+    // Déblocage par prénom
+    // ==========================================================================
+    function TryUnlock() {
+      const Typed = NameInput.value.trim().toLowerCase();
+
+      if (Typed === Config.Name.toLowerCase()) {
+        ShowScreen("Plans");
+        return;
+      }
+
+      Message.textContent = "Hmm, ce n'est pas ça… réessaie 💭";
+
+      // Relance l'animation même si la classe était déjà présente
+      NameInput.classList.remove("shake");
+      void NameInput.offsetWidth;
+      NameInput.classList.add("shake");
+    }
+
+    document.getElementById("Go").addEventListener("click", TryUnlock);
+    NameInput.addEventListener("keydown", (Event) => {
+      if (Event.key === "Enter") TryUnlock();
+    });
+
+    // ==========================================================================
+    // Projets d'avenir : cartes qui se retournent
+    // ==========================================================================
+    PlanList.innerHTML = Config.Plans.map((Plan) => `
+      <div class="flip">
+        <div>
+          <div class="face"><span class="big">♥</span>${Plan.Front}</div>
+          <div class="face back"><b>${Plan.Title}</b>${Plan.Text}</div>
+        </div>
+      </div>`).join("");
+
+    document.querySelectorAll(".flip").forEach((Flip) => {
+      Flip.addEventListener("click", () => Flip.classList.toggle("on"));
+    });
+  </script>
+</body>
+</html>
